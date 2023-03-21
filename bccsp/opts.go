@@ -3,6 +3,7 @@ package bccsp
 import (
 	"crypto"
 	"fmt"
+	"io"
 )
 
 const (
@@ -479,9 +480,9 @@ func (opts *IdemixSignerOpts) HashFunc() crypto.Hash {
 // IdemixNymSignerOpts 包含生成idemix假名签名的选项。
 type IdemixNymSignerOpts struct {
 	// Nym 是要使用的假名
-	Nym Key
+	Nym      Key
 	IssuerPK Key
-	H crypto.Hash
+	H        crypto.Hash
 }
 
 // HashFunc 返回用于生成传递给Signer.Sign的消息的散列函数的标识符，否则返回nil，表示没有进行散列。
@@ -521,12 +522,97 @@ func (opts *IdemixRevocationPublicKeyImportOpts) Ephemeral() bool {
 
 // IdemixCRISignerOpts 包含生成Idemix CRI的选项，CRI应该由发行机构生成，并可通过使用撤销公钥进行公开验证。
 type IdemixCRISignerOpts struct {
-	Epoch int
+	Epoch               int
 	RevocationAlgorithm RevocationAlgorithm
-	UnrevokedHandles [][]byte // revoke的含义是”撤销“
-	H crypto.Hash
+	UnrevokedHandles    [][]byte // revoke的含义是”撤销“
+	H                   crypto.Hash
 }
 
 func (opts *IdemixCRISignerOpts) HashFunc() crypto.Hash {
 	return opts.H
+}
+
+// ECDSAP256KeyGenOpts 包含用于生成具有P-256曲线的ECDSA密钥的选项。
+type ECDSAP256KeyGenOpts struct {
+	Temporary bool
+}
+
+// Algorithm 返回密钥生成算法的标识符。
+func (opts *ECDSAP256KeyGenOpts) Algorithm() string {
+	return ECDSAP256
+}
+
+// Ephemeral 如果派生出的密钥必须是暂时的，则该方法返回true，否则返回false。
+func (opts *ECDSAP256KeyGenOpts) Ephemeral() bool {
+	return opts.Temporary
+}
+
+// ECDSAP384KeyGenOpts 包含用于生成具有P-384曲线的ECDSA密钥的选项。
+type ECDSAP384KeyGenOpts struct {
+	Temporary bool
+}
+
+// Algorithm 返回密钥生成算法的标识符。
+func (opts *ECDSAP384KeyGenOpts) Algorithm() string {
+	return ECDSAP384
+}
+
+// Ephemeral 如果派生出的密钥必须是暂时的，则该方法返回true，否则返回false。
+func (opts *ECDSAP384KeyGenOpts) Ephemeral() bool {
+	return opts.Temporary
+}
+
+// AES128KeyGenOpts 包含128安全级别的AES密钥生成选项.
+type AES128KeyGenOpts struct {
+	Temporary bool
+}
+
+// Algorithm 返回密钥生成算法的标识符。
+func (opts *AES128KeyGenOpts) Algorithm() string {
+	return AES128
+}
+
+// Ephemeral 如果派生出的密钥必须是暂时的，则该方法返回true，否则返回false。
+func (opts *AES128KeyGenOpts) Ephemeral() bool {
+	return opts.Temporary
+}
+
+// AES192KeyGenOpts 包含192安全级别的AES密钥生成选项.
+type AES192KeyGenOpts struct {
+	Temporary bool
+}
+
+// Algorithm 返回密钥生成算法的标识符。
+func (opts *AES192KeyGenOpts) Algorithm() string {
+	return AES192
+}
+
+// Ephemeral 如果派生出的密钥必须是暂时的，则该方法返回true，否则返回false。
+func (opts *AES192KeyGenOpts) Ephemeral() bool {
+	return opts.Temporary
+}
+
+// AES256KeyGenOpts 包含256安全级别的AES密钥生成选项.
+type AES256KeyGenOpts struct {
+	Temporary bool
+}
+
+// Algorithm 返回密钥生成算法的标识符。
+func (opts *AES256KeyGenOpts) Algorithm() string {
+	return AES256
+}
+
+// Ephemeral 如果派生出的密钥必须是暂时的，则该方法返回true，否则返回false。
+func (opts *AES256KeyGenOpts) Ephemeral() bool {
+	return opts.Temporary
+}
+
+// AESCBCPKCS7ModeOpts 包含CBC模式下的AES加密和PKCS7填充的选项。注意，IV和
+// PRNG都可以为零。在这种情况下，BCCSP的实现应该使用一个加密安全的PRNG对IV进
+// 行采样。还要注意的是，IV或PRNG可以与nil不同。
+type AESCBCPKCS7ModeOpts struct {
+	// IV 是底层密码要使用的初始化向量。IV的长度必须与Block的块大小相同，只有当它不为nil时才会被使用。
+	IV []byte
+	// PRNG 是一个PRNG的实例，用于底层密码，只有当它不为nil时才会被使用。
+	PRNG io.Reader
 }
