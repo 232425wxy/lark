@@ -11,7 +11,7 @@ const (
 	ECDSAP384 = "ECDSAP384"
 
 	// ECDSAReRand 密钥重新随机化。
-	// TODO 什么是密钥重新随机化？猜测是密钥派生
+	// TODO 什么是密钥重新随机化？猜测是密钥派生。
 	ECDSAReRand = "ECDSA_RERAND"
 
 	// AES 代表默认安全级别的AES加密算法。
@@ -68,7 +68,7 @@ func (opts *ECDSAKeyGenOpts) Ephemeral() bool {
 	return opts.Temporary
 }
 
-// ECDSAPKIXPublicKeyImportOpts 包含用于以PKIX格式导入ECDSA公钥的选项
+// ECDSAPKIXPublicKeyImportOpts 包含用于以PKIX格式导入ECDSA公钥的选项。
 type ECDSAPKIXPublicKeyImportOpts struct {
 	Temporary bool
 }
@@ -129,7 +129,7 @@ func (opts *AESKeyGenOpts) Algorithm() string {
 	return AES
 }
 
-// Ephemeral 如果生成的密钥必须是短暂的,则该方法返回true,否则返回false.
+// Ephemeral 如果生成的密钥必须是短暂的,则该方法返回true,否则返回false。
 func (opts *AESKeyGenOpts) Ephemeral() bool {
 	return opts.Temporary
 }
@@ -137,7 +137,7 @@ func (opts *AESKeyGenOpts) Ephemeral() bool {
 // HMACTruncated256AESDeriveKeyOpts 包含HMAC截断在256位密钥衍生的选项。
 type HMACTruncated256AESDeriveKeyOpts struct {
 	Temporary bool
-	Arg []byte
+	Arg       []byte
 }
 
 // Algorithm 返回密钥派生算法的标识符。
@@ -145,3 +145,86 @@ func (opts *HMACTruncated256AESDeriveKeyOpts) Algorithm() string {
 	return HMACTruncated256
 }
 
+// Ephemeral 如果生成的密钥必须是短暂的,则该方法返回true,否则返回false。
+func (opts *HMACTruncated256AESDeriveKeyOpts) Ephemeral() bool {
+	return opts.Temporary
+}
+
+// Argument 返回传给HMAC的参数。
+func (opts *HMACTruncated256AESDeriveKeyOpts) Argument() []byte {
+	return opts.Arg
+}
+
+// HMACDeriveKeyOpts 包含HMAC密钥派生的选项。
+type HMACDeriveKeyOpts struct {
+	Temporary bool
+	Arg       []byte
+}
+
+// Algorithm 返回密钥派生算法的标识符。
+func (opts *HMACDeriveKeyOpts) Algorithm() string {
+	return HMAC
+}
+
+// Ephemeral 如果生成的密钥必须是暂时的，则该方法返回true，否则返回false。
+func (opts *HMACDeriveKeyOpts) Ephemeral() bool {
+	return opts.Temporary
+}
+
+// Argument 返回传给HMAC的参数。
+func (opts *HMACDeriveKeyOpts) Argument() []byte {
+	return opts.Arg
+}
+
+// AES256ImportKeyOpts 包含导入AES256密钥的选项。
+type AES256ImportKeyOpts struct {
+	Temporary bool
+}
+
+// Algorithm 返回密钥导入算法标识符。
+func (opts *AES256ImportKeyOpts) Algorithm() string {
+	return AES
+}
+
+// Ephemeral 如果生成的密钥必须是暂时的，则该方法返回true，否则返回false。
+func (opts *AES256ImportKeyOpts) Ephemeral() bool {
+	return opts.Temporary
+}
+
+// HMACImportKeyOpts 包含导入HMAC密钥的选项。
+type HMACImportKeyOpts struct {
+	Temporary bool
+}
+
+// Algorithm 返回密钥导入算法的标识符。
+func (opts *HMACImportKeyOpts) Algorithm() string {
+	return HMAC
+}
+
+// Ephemeral 如果生成的密钥必须是暂时的，则该方法返回true，否则返回false。
+func (opts *HMACImportKeyOpts) Ephemeral() bool {
+	return opts.Temporary
+}
+
+// SHAOpts 包含计算SHA的选项。
+type SHAOpts struct{}
+
+// Algorithm 返回哈希算法标识符。
+func (opts *SHAOpts) Algorithm() string {
+	return SHA
+}
+
+// X509PublicKeyImportOpts 包含从X509证书里导入公钥的选项。
+type X509PublicKeyImportOpts struct {
+	Temporary bool
+}
+
+// Algorithm 返回密钥导入算法的标识符。
+func (opts *X509PublicKeyImportOpts) Algorithm() string {
+	return X509Certificate
+}
+
+// Ephemeral 如果生成的密钥必须是暂时的，则该方法返回true，否则返回false。
+func (opts *X509PublicKeyImportOpts) Ephemeral() bool {
+	return opts.Temporary
+}
