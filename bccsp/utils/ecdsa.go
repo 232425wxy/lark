@@ -71,7 +71,7 @@ func SignatureToLowS(k *ecdsa.PublicKey, signature []byte) ([]byte, error) {
 	return MarshalECDSASignature(r, s)
 }
 
-// IsLowS 判断ECDSA签名里的s是否小于椭圆曲线的阶的一半N/2。
+// IsLowS 判断ECDSA签名里的s是否不大于椭圆曲线的阶的一半N/2。
 func IsLowS(k *ecdsa.PublicKey, s *big.Int) (bool, error) {
 	halfOrder, ok := curveHalfOrders[k.Curve]
 	if !ok {
