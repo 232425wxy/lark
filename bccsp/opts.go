@@ -33,7 +33,7 @@ const (
 	AES256 = "AES256"
 
 	// HMAC 代表哈希验证码。
-	HMAC = "HAMC"
+	HMAC = "HMAC"
 
 	// HMACTruncated256 代表截断前256位的哈希验证码。
 	HMACTruncated256 = "HMAC_TRUNCATED_256"
