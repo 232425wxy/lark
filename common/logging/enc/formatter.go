@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"sync"
 	"sync/atomic"
 
 	"go.uber.org/zap/zapcore"
@@ -18,6 +19,7 @@ import (
 // module: zap 日志记录器的名称；
 // shortfunc: 创建日志记录的函数的名称；
 // time: 创建日志记录时的时间。
+// color id level message module shortfunc time都是verb，冒号后面跟着的是format
 var formatRegexp = regexp.MustCompile(`%{(color|id|level|message|module|shortfunc|time)(?::(.*?))?}`)
 
 // sequence 是一个全局的序列号。
@@ -27,28 +29,86 @@ func SetSequence(s uint64) {
 	atomic.StoreUint64(&sequence, s)
 }
 
-// func ParseFormat(spec string) ([]Formatter, error) {
-// 	cursor := 0
-// 	formatters := []Formatter{}
+// ParseFormat 解析日志格式
+func ParseFormat(spec string) ([]Formatter, error) {
+	cursor := 0
+	formatters := []Formatter{}
 
-// 	matches := formatRegexp.FindAllStringSubmatchIndex(spec, -1)
-// 	for _, m := range matches {
-// 		start, end := m[0], m[1]
-// 		verbStart, verbEnd := m[2], m[3]
-// 		formatStart, formatEnd := m[4], m[5]
+	matches := formatRegexp.FindAllStringSubmatchIndex(spec, -1)
+	for _, m := range matches {
+		start, end := m[0], m[1]
+		verbStart, verbEnd := m[2], m[3]
+		formatStart, formatEnd := m[4], m[5]
 
-// 		if start > cursor {
-// 			formatters = append(formatters, StringFormatter{Value: spec[cursor:start]})
-// 		}
+		if start > cursor {
+			formatters = append(formatters, StringFormatter{Value: spec[cursor:start]})
+		}
+		var verb = spec[verbStart:verbEnd]
+		var format string
+		if formatStart >= 0 {
+			format = spec[formatStart:formatEnd]
+		}
 
-// 		var format string
-// 		if formatStart >= 0 {
-// 			format = spec[formatStart:formatEnd]
-// 		}
+		formatter, err := NewFormatter(verb, format)
+		if err != nil {
+			return nil, err
+		}
+		formatters = append(formatters, formatter)
+		cursor = end
+	}
 
-// 		// formatter, err := 
-// 	}
-// }
+	// 处理剩下的内容
+	if cursor != len(spec) {
+		formatters = append(formatters, StringFormatter{Value: spec[cursor:]})
+	}
+	return formatters, nil
+}
+
+func NewFormatter(verb, format string) (Formatter, error) {
+	switch verb {
+	case "color":
+		return newColorFormatter(format)
+	case "id":
+		return newSequenceFormatter(format), nil
+	case "level":
+		return newLevelFormatter(format), nil
+	case "message":
+		return newMessageFormatter(format), nil
+	case "module":
+		return newModuleFormatter(format), nil
+	case "shortfunc":
+		return newShortFuncFormatter(format), nil
+	case "time":
+		return newTimeFormatter(format), nil
+	default:
+		return nil, fmt.Errorf("unknown verb: %s", verb)
+	}
+}
+
+type MultiFormatter struct {
+	mutex sync.RWMutex
+	formatters []Formatter
+}
+
+func NewMultiFormatters(formatters ...Formatter) *MultiFormatter {
+	return &MultiFormatter{
+		formatters: formatters,
+	}
+}
+
+func (mf *MultiFormatter) Format(w io.Writer, entry zapcore.Entry, fields []zapcore.Field) {
+	mf.mutex.RLock()
+	for i := range mf.formatters {
+		mf.formatters[i].Format(w, entry, fields)
+	}
+	mf.mutex.RUnlock()
+}
+
+func (mf *MultiFormatter) SetFormatters(formatters []Formatter) {
+	mf.mutex.Lock()
+	mf.formatters = formatters
+	mf.mutex.Unlock()
+}
 
 type ColorFormatter struct {
 	Bold bool // 设置粗体属性
