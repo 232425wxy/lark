@@ -1,9 +1,16 @@
 package internal
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/232425wxy/lark/common/metrics"
+)
+
+var (
+	formatRegexp = regexp.MustCompile(`%{([#?[:alnum:]_]+)}`)
+	invalidLabelValueRegexp = regexp.MustCompile(`[.|:\s]`)
 )
 
 type Namer struct {
@@ -50,6 +57,7 @@ func (n *Namer) validateKey(name string) {
 	}
 }
 
+// 将{k1,v1,k2,v2,k3,v3...}转换为{k1:v1,k2:v2,k3:v3...}
 func (n *Namer) labelsToMap(labelValues []string) map[string]string {
 	labels := map[string]string{}
 	for i := 0; i < len(labelValues); i += 2 {
@@ -77,6 +85,47 @@ func (n *Namer) FullyQualifiedName() string {
 	}
 }
 
+func (n *Namer) Format(labelValues ...string) string {
+	labels := n.labelsToMap(labelValues)
+	cursor := 0
+	var segments []string
+	matches := formatRegexp.FindAllStringSubmatchIndex(n.nameFormat, -1)
+	for _, m := range matches {
+		start, end := m[0], m[1]
+		labelStart, labelEnd := m[2], m[3]
+		if start > cursor {
+			segments = append(segments, n.nameFormat[cursor:start])
+		}
+		key := n.nameFormat[labelStart:labelEnd]
+		var value string
+		switch key {
+		case "#namespace":
+			value = n.namespace
+		case "#subsystem":
+			value = n.subsystem
+		case "#name":
+			value = n.name
+		case "#fqname":
+			value = n.FullyQualifiedName()
+		default:
+			var ok bool
+			value, ok = labels[key]
+			if !ok {
+				panic(fmt.Sprintf("invalid label in name format: %s", key))
+			}
+			value = invalidLabelValueRegexp.ReplaceAllString(value, "_")
+		}
+		segments = append(segments, value)
+		cursor = end
+	}
+
+	if cursor != len(n.nameFormat) {
+		segments = append(segments, n.nameFormat[cursor:])
+	}
+
+	return strings.Join(segments, "")
+}
+
 func sliceToSet(slice []string) map[string]struct{} {
 	labelsSet := map[string]struct{}{}
 	for _, s := range slice {
@@ -84,3 +133,4 @@ func sliceToSet(slice []string) map[string]struct{} {
 	}
 	return labelsSet
 }
+
